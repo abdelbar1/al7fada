@@ -128,13 +128,15 @@ main{padding:18px 12px 55vh}
 #list{list-style:none;margin:0;padding:0 8px 16px;overflow:auto}
 #list li{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:16px;cursor:pointer}
 #list li.sel{background:var(--hid);box-shadow:0 0 0 1px var(--line) inset}
+.sheet-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.sheet-foot .btn{flex:none;padding:6px 12px;font-size:12px}
 .badge{position:relative;flex:none;width:38px;height:38px;display:grid;place-items:center;font:700 13px var(--font-ui);color:var(--gold)}
 .badge::before,.badge::after{content:"";position:absolute;inset:6px;border:1.5px solid var(--gold);border-radius:3px}
 .badge::after{transform:rotate(45deg)}
 .info{display:grid} .info b{font:400 22px/1.5 var(--font-q)} .info small{font-size:12px;color:var(--muted)}
 
 /* toast */
-#toast{position:fixed;z-index:20;top:42%;left:50%;min-width:240px;max-width:88vw;padding:22px 28px;text-align:center;background:var(--card);border:1.5px solid var(--gold);border-radius:24px;
+#toast{position:fixed;z-index:40;top:42%;left:50%;min-width:240px;max-width:88vw;padding:22px 28px;text-align:center;background:var(--card);border:1.5px solid var(--gold);border-radius:24px;
   box-shadow:0 0 60px var(--line);transform:translate(-50%,-50%) scale(.9);opacity:0;pointer-events:none;transition:.3s}
 #toast.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
 #toastT{display:block;font:700 26px var(--font-q);color:var(--gold)} #toastS{color:var(--muted);font-size:14px}
@@ -147,9 +149,10 @@ main{padding:18px 12px 55vh}
   <h1>حِفْظ</h1>
   <p id="loadText">جارٍ التحميل…</p>
   <div class="bar"><i id="loadBar"></i></div>
+  <small id="loadHint"></small>
   <pre id="loadErr"></pre>
-  <button id="loadBack" class="btn" hidden>رجوع إلى الوضع المباشر</button>
-  <small>الإصدار 4</small>
+  <button id="loadBack" class="btn" hidden>✕ إلغاء والعودة</button>
+  <small>الإصدار 5</small>
 </div>
 
 <header class="top">
@@ -193,6 +196,7 @@ main{padding:18px 12px 55vh}
       <label class="from">من آية <input id="from" type="number" min="1" value="1" inputmode="numeric"></label>
     </div>
     <ul id="list"></ul>
+    <div class="sheet-foot"><span id="offState"></span><button id="exportQ" class="btn">⬇️ quran.json</button></div>
   </div>
 </div>
 
@@ -201,13 +205,14 @@ main{padding:18px 12px 55vh}
 <script type="module">
 // ================= settings =================
 const QURAN_URL = "https://api.alquran.cloud/v1/quran/quran-simple";
+const QURAN_LOCAL = "quran.json";                 // optional copy in the repo, used first
+const TF_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3";
 const SR = 16000, WINDOW_SEC = 6, VOICE_RMS = 0.01;
 const BEHIND = 4, AHEAD = 20, HEARD_MAX = 14;   // alignment window
-// Offline models. Encoder always fp32: the browser runtime cannot run quantized Conv layers (ConvInteger)
+// Local models. Encoder always fp32: the browser runtime cannot run quantized Conv layers (ConvInteger)
 const MODELS = [
   { id: "emadjumaah/mishkat-whisper-tiny-ar-quran-onnx", dtype: { encoder_model: "fp32", decoder_model_merged: "int8" }, name: "Quran tiny" },
   { id: "eventhorizon0/tarteel-ai-onnx-whisper-base-ar-quran", dtype: { encoder_model: "fp32", decoder_model_merged: "q8" }, name: "Quran base" },
-  { id: "eventhorizon0/tarteel-ai-onnx-whisper-base-ar-quran", dtype: "fp32", name: "Quran base fp32" },
   { id: "Xenova/whisper-tiny", dtype: { encoder_model: "fp32", decoder_model_merged: "q8" }, name: "Whisper tiny (عام)", generic: true },
 ];
 
@@ -217,14 +222,17 @@ const MIC = '<svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-
 const STOP = '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="3"/></svg>';
 const $ = id => document.getElementById(id);
 const ar = n => n.toLocaleString("ar-EG");
-const state = Object.assign({ sura: 1, from: 1, theme: "night", show: false, cap: true, engine: SpeechRec ? "live" : "offline" },
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const state = Object.assign({ sura: 1, from: 1, theme: "night", show: false, cap: true, engine: "live", model: "" },
   JSON.parse(localStorage.hifz || "{}"));
 if (!SpeechRec) state.engine = "offline";
 const save = () => localStorage.hifz = JSON.stringify(state);
 
 let surahs, words = [], pointer = 0, listening = false, wake;
 
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+const swReady = "serviceWorker" in navigator
+  ? navigator.serviceWorker.register("sw.js").then(() => navigator.serviceWorker.ready).catch(() => null)
+  : Promise.resolve(null);
 
 // ================= text =================
 const norm = w => w
@@ -234,10 +242,22 @@ const norm = w => w
 const toWords = text => text.split(/\s+/).map(norm).filter(Boolean);
 const kind = s => s.revelationType === "Meccan" ? "مكية" : "مدنية";
 
+// Quran text: saved copy -> quran.json in the repo -> online API
 async function loadQuran() {
   const cache = await caches.open("quran");
-  if (!(await cache.match(QURAN_URL))) await cache.add(QURAN_URL);
-  return (await (await cache.match(QURAN_URL)).json()).data.surahs;
+  const hit = await cache.match(QURAN_URL);
+  if (hit) return (await hit.json()).data.surahs;
+  for (const url of [QURAN_LOCAL, QURAN_URL]) {
+    try {
+      const r = await fetch(url, { cache: "no-store" });
+      if (!r.ok) continue;
+      const j = await r.clone().json();
+      if (j?.data?.surahs?.length !== 114) continue;
+      await cache.put(QURAN_URL, r);
+      return j.data.surahs;
+    } catch {}
+  }
+  throw new Error("no quran");
 }
 
 function build() {
@@ -423,75 +443,60 @@ function liveStart() {
   };
   rec.onerror = e => {
     if (e.error === "not-allowed" || e.error === "service-not-allowed") { stop(); toast("الميكروفون غير مسموح", "اسمح للمتصفح باستخدام الميكروفون"); }
-    else if (e.error === "network") toast("لا يوجد اتصال", "الوضع المباشر يحتاج الإنترنت · جرّب وضع بدون إنترنت", 3000);
-    else if (e.error === "language-not-supported") { stop(); toast("العربية غير مدعومة هنا", "استخدم وضع بدون إنترنت"); }
+    else if (e.error === "network") { stop(); toast("لا يوجد اتصال", state.model ? "اضغط ⚡ للتبديل إلى الوضع المحلي 📴" : "الوضع المباشر يحتاج الإنترنت", 4000); }
+    else if (e.error === "language-not-supported") { stop(); toast("العربية غير مدعومة هنا", "استخدم الوضع المحلي 📴"); }
   };
   rec.onend = () => { if (listening && state.engine === "live") setTimeout(() => { try { rec.start(); } catch {} }, 50); };
   rec.start();
 }
 function liveStop() { if (rec) { rec.onend = null; try { rec.abort(); } catch {} rec = null; } }
 
-// ---------- offline engine: Quran Whisper model in a background worker ----------
-const WORKER_SRC = `
-import { pipeline } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3";
-const MODELS = ${JSON.stringify(MODELS)};
-let asr, withLang = true;
-self.onmessage = async ({ data }) => {
-  if (data.type === "load") {
+// ---------- local engine: Quran Whisper model running on the phone ----------
+let asr, modelReady, withLang = true, ctx, stream, chunks = [], total = 0, gen = 0, busy = false, tick;
+
+function loadModel() {
+  if (modelReady) return modelReady;
+  modelReady = (async () => {
+    // let the service worker take control first, so the library and its .wasm get saved for offline use
+    await Promise.race([swReady, sleep(3000)]);
+    if (navigator.serviceWorker && !navigator.serviceWorker.controller)
+      await Promise.race([new Promise(r => navigator.serviceWorker.addEventListener("controllerchange", r, { once: true })), sleep(3000)]);
+    $("loadText").textContent = "تحميل مكتبة التعرّف…";
+    const { pipeline } = await import(TF_URL);
+    const list = [...MODELS].sort((a, b) => (b.name === state.model) - (a.name === state.model));
     const errors = [];
-    for (const m of MODELS) {
+    for (const m of list) {
       const files = {};
-      self.postMessage({ type: "progress", name: m.name, pct: 0 });
+      $("loadText").textContent = `تحميل نموذج التلاوة (${m.name})…`;
+      $("loadBar").style.width = "0%";
       try {
         asr = await pipeline("automatic-speech-recognition", m.id, { dtype: m.dtype, device: "wasm",
           progress_callback: p => {
             if (p.status !== "progress" || !p.total) return;
             files[p.file] = [p.loaded, p.total];
             let l = 0, t = 0; for (const [a, b] of Object.values(files)) { l += a; t += b; }
-            self.postMessage({ type: "progress", name: m.name, pct: l / t * 100 });
+            $("loadBar").style.width = (l / t * 100) + "%";
+            $("loadHint").textContent = `${(l / 1048576).toFixed(0)} / ${(t / 1048576).toFixed(0)} MB`;
           } });
-        self.postMessage({ type: "ready", name: m.name, generic: !!m.generic });
-        return;
+        state.model = m.name; save();
+        return m;
       } catch (e) {
-        errors.push(m.name + ": " + String(e && e.message || e).slice(0, 120));
-        self.postMessage({ type: "errors", errors });
+        errors.push(m.name + ": " + String(e?.message || e).slice(0, 120));
+        $("loadErr").textContent = errors.join("\n");
+        if (!navigator.onLine) break;                  // no point trying the others without internet
       }
     }
-    self.postMessage({ type: "failed", errors });
-  } else if (data.type === "run") {
-    let text = "";
-    try {
-      try { text = (await asr(data.audio, withLang ? { language: "arabic", task: "transcribe" } : {})).text; }
-      catch (e) { if (!withLang) throw e; withLang = false; text = (await asr(data.audio)).text; }
-    } catch (e) { text = ""; }
-    self.postMessage({ type: "text", text, id: data.id });
-  }
-};`;
-
-let worker, modelReady, ctx, stream, chunks = [], total = 0, gen = 0, busy = false, tick;
-
-function loadModel() {
-  if (modelReady) return modelReady;
-  worker = new Worker(URL.createObjectURL(new Blob([WORKER_SRC], { type: "text/javascript" })), { type: "module" });
-  modelReady = new Promise((resolve, reject) => {
-    worker.onmessage = ({ data }) => {
-      if (data.type === "progress") { $("loadText").textContent = `تحميل نموذج التلاوة (${data.name})…`; $("loadBar").style.width = data.pct + "%"; }
-      else if (data.type === "errors") $("loadErr").textContent = data.errors.join("\n");
-      else if (data.type === "ready") { worker.onmessage = onWorker; resolve(data); }
-      else if (data.type === "failed") reject(new Error("no model"));
-    };
-    worker.onerror = e => { $("loadErr").textContent = String(e.message || e); reject(e); };
-  });
-  modelReady.catch(() => { modelReady = null; worker.terminate(); });
+    throw new Error("no model");
+  })();
+  modelReady.catch(() => { modelReady = null; });
   return modelReady;
 }
 
-function onWorker({ data }) {
-  if (data.type !== "text") return;
-  busy = false;
-  if (!listening || state.engine !== "offline" || data.id !== gen) return;
-  showHeard(data.text);
-  track(toWords(data.text), false);
+async function transcribe(audio) {
+  try {
+    try { return (await asr(audio, withLang ? { language: "arabic", task: "transcribe" } : {})).text; }
+    catch (e) { if (!withLang) throw e; withLang = false; return (await asr(audio)).text; }
+  } catch { return ""; }
 }
 
 async function offStart() {
@@ -518,15 +523,19 @@ async function offStart() {
   tick = setInterval(offTick, 200);
 }
 
-function offTick() {
-  if (!listening || busy || total < SR) return;
+async function offTick() {
+  if (!listening || busy || !asr || total < SR) return;
   const audio = new Float32Array(total);
   let o = 0; for (const c of chunks) { audio.set(c, o); o += c.length; }
   const tail = audio.subarray(Math.max(0, audio.length - SR * 2));
   let s = 0; for (const x of tail) s += x * x;
   if (Math.sqrt(s / tail.length) < VOICE_RMS) return;  // silence: skip (avoids hallucinations)
   busy = true;
-  worker.postMessage({ type: "run", audio, id: gen }, [audio.buffer]);
+  const id = gen, text = await transcribe(audio);
+  busy = false;
+  if (!listening || state.engine !== "offline" || id !== gen) return;
+  showHeard(text);
+  track(toWords(text), false);
 }
 
 function offClear() { chunks = []; total = 0; gen++; }
@@ -551,11 +560,26 @@ function renderList() {
   }
 }
 function openSheet() {
+  offState();
   $("search").value = ""; $("from").value = 1; renderList();
   $("sheet").classList.add("open");
   $("list").querySelector(".sel")?.scrollIntoView({ block: "center" });
 }
 function closeSheet() { $("sheet").classList.remove("open"); }
+
+async function offState() {
+  const q = await (await caches.open("quran")).match(QURAN_URL);
+  $("offState").textContent = `${q ? "✓" : "✗"} المصحف محفوظ · ${state.model ? "✓ النموذج المحلي" : "✗ النموذج المحلي غير منزّل"}`;
+}
+
+async function exportQuran() {
+  const r = await (await caches.open("quran")).match(QURAN_URL);
+  if (!r) { toast("المصحف غير محفوظ بعد"); return; }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([await r.text()], { type: "application/json" }));
+  a.download = "quran.json"; document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+}
 
 // ================= UI =================
 function applyUI() {
@@ -563,28 +587,47 @@ function applyUI() {
   document.querySelector("meta[name=theme-color]").content = state.theme === "night" ? "#071f1b" : "#efe5cc";
   $("text").classList.toggle("show", state.show); $("show").classList.toggle("on", state.show);
   document.body.classList.toggle("cap", state.cap); $("cap").classList.toggle("on", state.cap);
-  $("engine").textContent = state.engine === "live" ? "⚡ مباشر" : "📴 بدون إنترنت";
+  $("engine").textContent = state.engine === "live" ? "⚡ مباشر" : "📴 محلي";
 }
 
+let loadToken = 0;
 async function useEngine(engine) {
   if (listening) stop();
-  state.engine = engine; save(); applyUI();
-  if (engine === "offline") {
-    $("mic").disabled = true;
-    if (!modelReady) { $("loadErr").textContent = ""; $("loadBack").hidden = true; $("loader").classList.remove("done"); }
-    try {
-      const m = await loadModel();
-      $("loader").classList.add("done");
-      toast("وضع بدون إنترنت", m.generic ? "نموذج عام · دقة أقل في التلاوة" : "النموذج: " + m.name, 2500);
-    } catch {
-      $("loadText").textContent = "تعذّر تحميل النموذج";
-      $("loadBack").hidden = !SpeechRec;
-      return;
-    }
-  } else {
-    toast("الوضع المباشر", "تتبّع فوري · يحتاج الإنترنت", 2500);
+  if (engine === "offline" && !asr && !navigator.onLine && !state.model) {
+    toast("يلزم الإنترنت مرة واحدة", "اتصل بالإنترنت لتنزيل نموذج التلاوة (حوالي ٦٠ م.ب) · بعدها يعمل الوضع المحلي بدون إنترنت", 6000);
+    return false;
   }
-  $("mic").disabled = false;
+  state.engine = engine; save(); applyUI();
+  if (engine === "live") {
+    $("mic").disabled = false;
+    if (navigator.onLine) toast("الوضع المباشر", "تتبّع فوري · يحتاج الإنترنت", 2500);
+    else toast("لا يوجد اتصال", state.model ? "اضغط ⚡ للتبديل إلى الوضع المحلي 📴" : "الوضع المباشر يحتاج الإنترنت", 4000);
+    return true;
+  }
+  if (asr) { $("mic").disabled = false; toast("الوضع المحلي 📴", "يعمل بدون إنترنت", 2500); return true; }
+  const token = ++loadToken;
+  $("mic").disabled = true;
+  $("loadErr").textContent = ""; $("loadHint").textContent = ""; $("loadBar").style.width = "0%";
+  $("loadBack").hidden = false;
+  $("loader").classList.remove("done");
+  try {
+    const m = await loadModel();
+    if (token !== loadToken) return true;             // cancelled: the model stays ready for next time
+    $("loader").classList.add("done");
+    $("mic").disabled = false;
+    toast("الوضع المحلي جاهز ✨", (m.generic ? "نموذج عام · دقة أقل في التلاوة" : m.name) + " · يعمل الآن بدون إنترنت", 3500);
+    return true;
+  } catch {
+    if (token === loadToken) $("loadText").textContent = navigator.onLine ? "تعذّر تحميل النموذج" : "لا يوجد اتصال بالإنترنت";
+    return false;
+  }
+}
+
+function cancelLoad() {
+  loadToken++;
+  $("loader").classList.add("done");
+  if (SpeechRec) useEngine("live");
+  else { $("mic").disabled = true; toast("الوضع المحلي غير جاهز", "اتصل بالإنترنت وحاول مرة أخرى"); }
 }
 
 applyUI(); setMic(false);
@@ -595,7 +638,8 @@ $("engine").onclick = () => {
   if (!SpeechRec) { toast("الوضع المباشر غير متاح", "هذا المتصفح لا يدعم التعرّف على الكلام · استخدم Chrome أو Safari"); return; }
   useEngine(state.engine === "live" ? "offline" : "live");
 };
-$("loadBack").onclick = () => { $("loader").classList.add("done"); useEngine("live"); };
+$("loadBack").onclick = cancelLoad;
+$("exportQ").onclick = exportQuran;
 $("reset").onclick = build;
 $("peek").onclick = () => { const i = words.findIndex((w, k) => k >= pointer && w.st === "hid"); if (i >= 0) set(i, "peek"); };
 $("mic").onclick = () => listening ? stop() : start().catch(e => { stop(); toast("تعذّر تشغيل الميكروفون", e.message); });
@@ -612,12 +656,17 @@ window.addEventListener("appinstalled", () => { $("install").hidden = true; toas
 $("install").onclick = async () => { $("install").hidden = true; installEvt?.prompt(); installEvt = null; };
 
 // ================= load =================
-try { $("loadText").textContent = "تحميل نص المصحف…"; surahs = await loadQuran(); }
-catch { $("loadText").textContent = "يلزم الاتصال بالإنترنت في أول مرة"; throw new Error("offline"); }
+$("loadText").textContent = "تحميل نص المصحف…";
+try { surahs = await loadQuran(); }
+catch {
+  $("loadText").textContent = "تعذّر تحميل المصحف";
+  $("loadHint").textContent = "اتصل بالإنترنت وأعد فتح الصفحة، أو ارفع ملف quran.json إلى المستودع";
+  throw new Error("no quran");
+}
 build();
 $("loader").classList.add("done");
-useEngine(state.engine);
+navigator.storage?.persist?.().catch(() => {});      // ask the browser not to delete saved data
+useEngine(state.engine).then(ok => { if (ok === false && state.engine !== "live" && SpeechRec) useEngine("live"); });
 </script>
 </body>
 </html>
-
