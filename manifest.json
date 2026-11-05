@@ -1,0 +1,26 @@
+{
+  "name": "حفظ · Hifz",
+  "short_name": "حفظ",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./page.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#071f1b",
+  "theme_color": "#071f1b",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

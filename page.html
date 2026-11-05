@@ -4,9 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#071f1b">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="حفظ">
 <title>حفظ</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Reem+Kufi:wght@500;700&display=swap">
@@ -25,6 +30,7 @@ body{min-height:100vh;color:var(--ink);font-family:var(--font-ui);
   background:var(--pattern),radial-gradient(ellipse at top,var(--bg2),var(--bg) 70%);background-attachment:fixed;transition:background .4s,color .4s}
 button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;padding:0}
 svg{width:22px;height:22px;fill:currentColor}
+[hidden]{display:none!important}
 
 /* loader */
 #loader{position:fixed;inset:0;z-index:30;display:grid;place-content:center;justify-items:center;gap:14px;text-align:center;padding:24px;
@@ -40,16 +46,19 @@ svg{width:22px;height:22px;fill:currentColor}
 @keyframes spin{to{transform:rotate(360deg)}}
 .bar{width:230px;height:6px;border-radius:9px;background:var(--hid);overflow:hidden}
 .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold2),var(--gold));transition:width .3s}
+.btn{border:1px solid var(--gold);border-radius:999px;padding:8px 18px;color:var(--gold);background:var(--hid)}
 
 /* header */
-.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px;
-  padding:calc(env(safe-area-inset-top) + 10px) 14px 12px;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
-.brand{width:48px;font:700 28px var(--font-q);color:var(--gold)}
-.icon{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--hid);display:grid;place-items:center;color:var(--gold)}
-.pill{display:flex;align-items:center;gap:6px;border:1px solid var(--gold);border-radius:999px;padding:4px 18px;font:22px var(--font-q);color:var(--ink);background:linear-gradient(180deg,var(--hid),transparent)}
-.pill svg{width:18px;height:18px;color:var(--gold)}
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:calc(env(safe-area-inset-top) + 10px) 12px 12px;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.icon{flex:none;width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--hid);display:grid;place-items:center;color:var(--gold)}
+.chip{flex:none;display:flex;align-items:center;gap:4px;height:34px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--hid);font-size:13px;color:var(--gold)}
+.pill{min-width:0;display:flex;align-items:center;gap:6px;border:1px solid var(--gold);border-radius:999px;padding:4px 16px;font:22px var(--font-q);color:var(--ink);background:linear-gradient(180deg,var(--hid),transparent);white-space:nowrap}
+.pill svg{flex:none;width:18px;height:18px;color:var(--gold)}
 #progress{position:absolute;left:0;right:0;bottom:-1px;height:3px}
 #progress::after{content:"";display:block;height:100%;width:var(--p,0%);background:linear-gradient(90deg,var(--gold2),var(--gold));box-shadow:0 0 10px var(--gold);transition:width .5s}
+#install{position:fixed;z-index:7;top:calc(env(safe-area-inset-top) + 72px);left:50%;transform:translateX(-50%);
+  padding:8px 20px;border-radius:999px;color:#1b1405;font-weight:700;background:linear-gradient(180deg,var(--gold2),var(--gold));box-shadow:0 8px 24px #0006}
 
 /* page */
 main{padding:18px 12px 55vh}
@@ -68,11 +77,15 @@ main{padding:18px 12px 55vh}
 .w.hid{color:transparent;background:var(--hid)}
 .show .w.hid{color:var(--muted);background:none}
 .w.ok{animation:reveal .9s ease}
+.w.fix{text-decoration:underline dotted var(--bad);text-underline-offset:10px;animation:reveal .9s ease}
 .w.missed{color:var(--bad);text-decoration:underline wavy var(--bad);text-underline-offset:10px;animation:pop .4s}
+.w.err{color:var(--bad);background:#ff6b6b22;animation:shake .45s}
 .w.peek{color:var(--peek);animation:pop .4s}
-.w.cur{background:var(--line);box-shadow:0 0 0 2px var(--gold) inset;animation:pulse 1.6s ease-in-out infinite}
+.w.cur{box-shadow:0 0 0 2px var(--gold) inset;animation:pulse 1.6s ease-in-out infinite}
+.w.cur.hid{background:var(--line)}
 @keyframes reveal{0%{color:var(--gold2);text-shadow:0 0 18px var(--gold)}100%{color:var(--ink);text-shadow:none}}
 @keyframes pop{0%{transform:scale(.85);opacity:0}100%{transform:none;opacity:1}}
+@keyframes shake{20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
 @keyframes pulse{50%{box-shadow:0 0 0 2px var(--gold) inset,0 0 16px var(--gold)}}
 
 /* ayah medallion */
@@ -121,7 +134,7 @@ main{padding:18px 12px 55vh}
 .info{display:grid} .info b{font:400 22px/1.5 var(--font-q)} .info small{font-size:12px;color:var(--muted)}
 
 /* toast */
-#toast{position:fixed;z-index:20;top:42%;left:50%;min-width:240px;padding:22px 28px;text-align:center;background:var(--card);border:1.5px solid var(--gold);border-radius:24px;
+#toast{position:fixed;z-index:20;top:42%;left:50%;min-width:240px;max-width:88vw;padding:22px 28px;text-align:center;background:var(--card);border:1.5px solid var(--gold);border-radius:24px;
   box-shadow:0 0 60px var(--line);transform:translate(-50%,-50%) scale(.9);opacity:0;pointer-events:none;transition:.3s}
 #toast.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
 #toastT{display:block;font:700 26px var(--font-q);color:var(--gold)} #toastS{color:var(--muted);font-size:14px}
@@ -135,16 +148,17 @@ main{padding:18px 12px 55vh}
   <p id="loadText">جارٍ التحميل…</p>
   <div class="bar"><i id="loadBar"></i></div>
   <pre id="loadErr"></pre>
-  <small>التحميل الأول فقط · بعده يعمل بدون إنترنت</small>
-  <small>الإصدار 3</small>
+  <button id="loadBack" class="btn" hidden>رجوع إلى الوضع المباشر</button>
+  <small>الإصدار 4</small>
 </div>
 
 <header class="top">
-  <span class="brand">حِفْظ</span>
+  <button id="engine" class="chip"></button>
   <button id="pick" class="pill"><span id="pickName"></span><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></button>
   <button id="theme" class="icon" aria-label="Theme"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
   <div id="progress"></div>
 </header>
+<button id="install" hidden>📲 تثبيت التطبيق</button>
 
 <main>
   <section class="page">
@@ -185,36 +199,39 @@ main{padding:18px 12px 55vh}
 <div id="toast"><span id="toastT"></span><span id="toastS"></span></div>
 
 <script type="module">
-import { pipeline } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3";
-
-// Encoder always fp32: the browser runtime cannot run quantized Conv layers (ConvInteger)
+// ================= settings =================
+const QURAN_URL = "https://api.alquran.cloud/v1/quran/quran-simple";
+const SR = 16000, WINDOW_SEC = 6, VOICE_RMS = 0.01;
+const BEHIND = 4, AHEAD = 20, HEARD_MAX = 14;   // alignment window
+// Offline models. Encoder always fp32: the browser runtime cannot run quantized Conv layers (ConvInteger)
 const MODELS = [
   { id: "emadjumaah/mishkat-whisper-tiny-ar-quran-onnx", dtype: { encoder_model: "fp32", decoder_model_merged: "int8" }, name: "Quran tiny" },
   { id: "eventhorizon0/tarteel-ai-onnx-whisper-base-ar-quran", dtype: { encoder_model: "fp32", decoder_model_merged: "q8" }, name: "Quran base" },
   { id: "eventhorizon0/tarteel-ai-onnx-whisper-base-ar-quran", dtype: "fp32", name: "Quran base fp32" },
   { id: "Xenova/whisper-tiny", dtype: { encoder_model: "fp32", decoder_model_merged: "q8" }, name: "Whisper tiny (عام)", generic: true },
 ];
-const QURAN_URL = "https://api.alquran.cloud/v1/quran/quran-simple";
-const SR = 16000, WINDOW_SEC = 6, VOICE_RMS = 0.01;
+
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 const BASMALA = "بسم,الله,الرحمن,الرحيم";
 const MIC = '<svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg>';
 const STOP = '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="3"/></svg>';
 const $ = id => document.getElementById(id);
-const sleep = ms => new Promise(r => setTimeout(r, ms));
 const ar = n => n.toLocaleString("ar-EG");
-const state = Object.assign({ sura: 1, from: 1, theme: "night", show: false, cap: true }, JSON.parse(localStorage.hifz || "{}"));
+const state = Object.assign({ sura: 1, from: 1, theme: "night", show: false, cap: true, engine: SpeechRec ? "live" : "offline" },
+  JSON.parse(localStorage.hifz || "{}"));
+if (!SpeechRec) state.engine = "offline";
 const save = () => localStorage.hifz = JSON.stringify(state);
 
-let surahs, asr, words = [], pointer = 0, gen = 0, runId = 0;
-let ctx, stream, wake, chunks = [], total = 0, listening = false;
+let surahs, words = [], pointer = 0, listening = false, wake;
 
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 
-// ---------- text ----------
+// ================= text =================
 const norm = w => w
   .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g, "")
-  .replace(/[أإآٱ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه")
+  .replace(/[أإآٱ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").replace(/ؤ/g, "و").replace(/ئ/g, "ي").replace(/ء/g, "")
   .replace(/[^\u0621-\u064A]/g, "");
+const toWords = text => text.split(/\s+/).map(norm).filter(Boolean);
 const kind = s => s.revelationType === "Meccan" ? "مكية" : "مدنية";
 
 async function loadQuran() {
@@ -227,7 +244,7 @@ function build() {
   const s = surahs[state.sura - 1];
   state.from = Math.min(Math.max(1, state.from | 0), s.ayahs.length);
   save();
-  words = []; pointer = 0; resetAudio();
+  words = []; pointer = 0; resetHeard();
   $("pickName").textContent = s.name;
   $("sName").textContent = s.name;
   $("sInfo").textContent = `${kind(s)} · ${ar(s.ayahs.length)} آية` + (state.from > 1 ? ` · من الآية ${ar(state.from)}` : "");
@@ -263,7 +280,8 @@ function mark() {
   document.querySelector(".w.cur")?.classList.remove("cur");
   const w = words[pointer];
   if (w) { w.el.classList.add("cur"); w.el.scrollIntoView({ block: "center", behavior: "smooth" }); }
-  const ok = words.filter(w => w.st === "ok").length, bad = words.filter(w => w.st === "missed").length;
+  const ok = words.filter(w => w.st === "ok").length;
+  const bad = words.filter(w => w.st === "missed" || w.st === "err" || w.st === "fix").length;
   const pct = words.length ? Math.round(pointer / words.length * 100) : 0;
   $("stOk").textContent = ar(ok); $("stBad").textContent = ar(bad); $("stPct").textContent = ar(pct) + "٪";
   $("progress").style.setProperty("--p", pct + "%");
@@ -272,23 +290,25 @@ function mark() {
 function tapWord(i) {
   if (i < pointer) {                       // recited word: go back and repeat from here
     for (let k = i; k < pointer; k++) set(k, "hid");
-    pointer = i; resetAudio(); mark();
+    pointer = i; resetHeard(); mark();
   } else if (words[i].st === "hid") set(i, "peek");
 }
 
 function finish() {
   stop();
-  const bad = words.filter(w => w.st === "missed").length, peek = words.filter(w => w.st === "peek").length;
+  const bad = words.filter(w => ["missed", "err", "fix"].includes(w.st)).length, peek = words.filter(w => w.st === "peek").length;
   toast("ما شاء الله ✨", bad || peek ? `${ar(bad)} أخطاء · ${ar(peek)} لمحات` : "تلاوة بلا أخطاء");
 }
 
-function toast(title, sub = "") {
+function toast(title, sub = "", ms = 4500) {
   $("toastT").textContent = title; $("toastS").textContent = sub;
   $("toast").classList.add("open");
-  clearTimeout(toast.t); toast.t = setTimeout(() => $("toast").classList.remove("open"), 4500);
+  clearTimeout(toast.t); toast.t = setTimeout(() => $("toast").classList.remove("open"), ms);
 }
 
 // ---------- alignment ----------
+const IGNORE = new Set(["اعوذ", "بالله", "من", "الشيطان", "الرجيم", "بسم", "الله", "الرحمن", "الرحيم", "صدق", "العظيم"]);
+
 function lev(a, b) {
   const d = Array.from({ length: b.length + 1 }, (_, j) => j);
   for (let i = 1; i <= a.length; i++) {
@@ -301,88 +321,223 @@ function lev(a, b) {
   }
   return d[b.length];
 }
-const same = (a, b) => a === b || lev(a, b) <= Math.floor(Math.max(a.length, b.length) / 4);
+// tolerance: 1 letter for 3–7 letter words, 2 for longer; 2-letter words must match exactly
+const same = (a, b) => { const L = Math.max(a.length, b.length); return a === b || (L >= 3 && lev(a, b) <= Math.max(1, Math.floor(L / 4))); };
 
-function track(heard) {
-  const lo = Math.max(0, pointer - 6), hi = Math.min(words.length, pointer + 15);
+// heard: normalized words of the latest transcript; final: the recognizer has committed it
+function track(heard, final) {
+  if (!heard.length || pointer >= words.length) return;
+  heard = heard.slice(-HEARD_MAX);
+  const lo = Math.max(0, pointer - BEHIND), hi = Math.min(words.length, pointer + AHEAD);
   const E = words.slice(lo, hi).map(w => w.n), n = heard.length, m = E.length;
-  if (!n || !m) return;
   const S = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
   let best = 0, bi = 0, bj = 0;
   for (let i = 1; i <= n; i++) for (let j = 1; j <= m; j++) {
     S[i][j] = Math.max(0, S[i-1][j-1] + (same(heard[i-1], E[j-1]) ? 2 : -1), S[i-1][j] - 1, S[i][j-1] - 1);
-    if (S[i][j] > best) { best = S[i][j]; bi = i; bj = j; }
+    if (S[i][j] > best || (S[i][j] === best && best > 0 && i > bi)) { best = S[i][j]; bi = i; bj = j; }
   }
-  if (best < 3) return;
-  const matched = new Set();
+  if (!best) return;                                   // not anchored anywhere yet
+  const matched = [];
   for (let i = bi, j = bj; i > 0 && j > 0 && S[i][j] > 0;) {
     const ok = same(heard[i-1], E[j-1]);
-    if (S[i][j] === S[i-1][j-1] + (ok ? 2 : -1)) { if (ok) matched.add(lo + j - 1); i--; j--; }
+    if (S[i][j] === S[i-1][j-1] + (ok ? 2 : -1)) { if (ok) matched.push(lo + j - 1); i--; j--; }
     else if (S[i][j] === S[i-1][j] - 1) i--;
     else j--;
   }
-  const end = lo + bj - 1;
-  if (end < pointer) return;
+  matched.reverse();
+  const tail = heard.slice(bi);                        // heard after the last matched word
+  const fresh = matched.filter(k => k >= pointer);
+  if (!fresh.length) { checkTail(tail, final); return; }
+
+  // need more evidence before jumping over words
+  const gap = fresh[0] - pointer;
+  const enough = gap === 0 || fresh.length >= 3 || (fresh.length === 2 && gap <= 2) || (final && gap <= 1);
+  if (!enough) return;
+
+  const hit = new Set(fresh), last = fresh.at(-1);
   let missed = false;
-  for (let k = pointer; k <= end; k++) if (words[k].st !== "peek") {
-    const ok = matched.has(k);
-    set(k, ok ? "ok" : "missed");
-    if (!ok) missed = true;
+  for (let k = pointer; k <= last; k++) {
+    const st = words[k].st;
+    if (hit.has(k)) { if (st !== "peek") set(k, st === "err" ? "fix" : "ok"); }
+    else if (st !== "peek") { set(k, "missed"); missed = true; }
   }
-  pointer = end + 1;
+  pointer = last + 1;
   mark();
   if (missed) navigator.vibrate?.(70);
-  if (pointer >= words.length) finish();
+  if (pointer >= words.length) { finish(); return; }
+  checkTail(tail, final);
 }
 
-// ---------- microphone ----------
-function resetAudio() { chunks = []; total = 0; gen++; $("heard").textContent = ""; }
+// words heard after the last match that do not fit the next word -> show the correct word in red
+function checkTail(tail, final) {
+  if (!tail.length || pointer >= words.length) return;
+  if (!final && tail.length < 2) return;               // wait: interim text may still change
+  const w = words[pointer];
+  if (w.st !== "hid" && w.st !== "peek") return;
+  if (tail.every(t => IGNORE.has(t))) return;          // isti'adha / basmala
+  if (w.n.startsWith(tail[0]) || same(tail[0], w.n)) return;
+  set(pointer, "err");
+  navigator.vibrate?.([60, 40, 60]);
+  mark();
+}
+
+// ================= engines =================
+function showHeard(text) {
+  $("heard").textContent = text.trim().split(/\s+/).slice(-8).join(" ");
+}
 function setMic(on) { $("mic").classList.toggle("live", on); $("micIcon").innerHTML = on ? STOP : MIC; }
 const keepAwake = () => navigator.wakeLock?.request("screen").then(l => wake = l).catch(() => {});
 
-async function start() {
+function start() {
+  listening = true; setMic(true); keepAwake();
+  return state.engine === "live" ? liveStart() : offStart();
+}
+function stop() {
+  listening = false; setMic(false);
+  wake?.release(); wake = null;
+  liveStop(); offStop();
+  $("heard").textContent = "";
+}
+function resetHeard() {          // forget what was heard (new passage or going back)
+  $("heard").textContent = "";
+  if (!listening) return;
+  if (state.engine === "live") rec?.abort();   // onend restarts with an empty transcript
+  else offClear();
+}
+
+// ---------- live engine: phone speech recognition (Google on Android, Apple on iPhone) ----------
+let rec;
+function liveStart() {
+  rec = new SpeechRec();
+  rec.lang = "ar-SA";
+  rec.continuous = true;
+  rec.interimResults = true;
+  rec.maxAlternatives = 1;
+  rec.onresult = e => {
+    const parts = [];
+    for (let i = 0; i < e.results.length; i++) parts.push(e.results[i][0].transcript.trim());
+    // Android repeats earlier text inside later results: drop parts that the next one already contains
+    const text = parts.filter((p, i) => !(i + 1 < parts.length && parts[i + 1].startsWith(p))).join(" ");
+    showHeard(text);
+    track(toWords(text), e.results[e.results.length - 1].isFinal);
+  };
+  rec.onerror = e => {
+    if (e.error === "not-allowed" || e.error === "service-not-allowed") { stop(); toast("الميكروفون غير مسموح", "اسمح للمتصفح باستخدام الميكروفون"); }
+    else if (e.error === "network") toast("لا يوجد اتصال", "الوضع المباشر يحتاج الإنترنت · جرّب وضع بدون إنترنت", 3000);
+    else if (e.error === "language-not-supported") { stop(); toast("العربية غير مدعومة هنا", "استخدم وضع بدون إنترنت"); }
+  };
+  rec.onend = () => { if (listening && state.engine === "live") setTimeout(() => { try { rec.start(); } catch {} }, 50); };
+  rec.start();
+}
+function liveStop() { if (rec) { rec.onend = null; try { rec.abort(); } catch {} rec = null; } }
+
+// ---------- offline engine: Quran Whisper model in a background worker ----------
+const WORKER_SRC = `
+import { pipeline } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3";
+const MODELS = ${JSON.stringify(MODELS)};
+let asr, withLang = true;
+self.onmessage = async ({ data }) => {
+  if (data.type === "load") {
+    const errors = [];
+    for (const m of MODELS) {
+      const files = {};
+      self.postMessage({ type: "progress", name: m.name, pct: 0 });
+      try {
+        asr = await pipeline("automatic-speech-recognition", m.id, { dtype: m.dtype, device: "wasm",
+          progress_callback: p => {
+            if (p.status !== "progress" || !p.total) return;
+            files[p.file] = [p.loaded, p.total];
+            let l = 0, t = 0; for (const [a, b] of Object.values(files)) { l += a; t += b; }
+            self.postMessage({ type: "progress", name: m.name, pct: l / t * 100 });
+          } });
+        self.postMessage({ type: "ready", name: m.name, generic: !!m.generic });
+        return;
+      } catch (e) {
+        errors.push(m.name + ": " + String(e && e.message || e).slice(0, 120));
+        self.postMessage({ type: "errors", errors });
+      }
+    }
+    self.postMessage({ type: "failed", errors });
+  } else if (data.type === "run") {
+    let text = "";
+    try {
+      try { text = (await asr(data.audio, withLang ? { language: "arabic", task: "transcribe" } : {})).text; }
+      catch (e) { if (!withLang) throw e; withLang = false; text = (await asr(data.audio)).text; }
+    } catch (e) { text = ""; }
+    self.postMessage({ type: "text", text, id: data.id });
+  }
+};`;
+
+let worker, modelReady, ctx, stream, chunks = [], total = 0, gen = 0, busy = false, tick;
+
+function loadModel() {
+  if (modelReady) return modelReady;
+  worker = new Worker(URL.createObjectURL(new Blob([WORKER_SRC], { type: "text/javascript" })), { type: "module" });
+  modelReady = new Promise((resolve, reject) => {
+    worker.onmessage = ({ data }) => {
+      if (data.type === "progress") { $("loadText").textContent = `تحميل نموذج التلاوة (${data.name})…`; $("loadBar").style.width = data.pct + "%"; }
+      else if (data.type === "errors") $("loadErr").textContent = data.errors.join("\n");
+      else if (data.type === "ready") { worker.onmessage = onWorker; resolve(data); }
+      else if (data.type === "failed") reject(new Error("no model"));
+    };
+    worker.onerror = e => { $("loadErr").textContent = String(e.message || e); reject(e); };
+  });
+  modelReady.catch(() => { modelReady = null; worker.terminate(); });
+  return modelReady;
+}
+
+function onWorker({ data }) {
+  if (data.type !== "text") return;
+  busy = false;
+  if (!listening || state.engine !== "offline" || data.id !== gen) return;
+  showHeard(data.text);
+  track(toWords(data.text), false);
+}
+
+async function offStart() {
   stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
-  ctx = new AudioContext({ sampleRate: SR });
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const ratio = ctx.sampleRate / SR;
   const src = ctx.createMediaStreamSource(stream);
   const proc = ctx.createScriptProcessor(4096, 1, 1);
   proc.onaudioprocess = e => {
-    const c = new Float32Array(e.inputBuffer.getChannelData(0));
-    chunks.push(c); total += c.length;
+    const input = e.inputBuffer.getChannelData(0);
+    const out = new Float32Array(Math.floor(input.length / ratio));
+    let s = 0;
+    for (let i = 0; i < out.length; i++) {          // downsample to 16 kHz (box average)
+      const a = Math.floor(i * ratio), b = Math.min(input.length, Math.floor((i + 1) * ratio));
+      let sum = 0; for (let k = a; k < b; k++) sum += input[k];
+      out[i] = sum / Math.max(1, b - a); s += out[i] * out[i];
+    }
+    chunks.push(out); total += out.length;
     while (total - chunks[0].length >= SR * WINDOW_SEC) total -= chunks.shift().length;
-    let s = 0; for (const x of c) s += x * x;
-    $("mic").style.setProperty("--lvl", Math.min(1, Math.sqrt(s / c.length) * 12).toFixed(2));
+    $("mic").style.setProperty("--lvl", Math.min(1, Math.sqrt(s / out.length) * 12).toFixed(2));
   };
   src.connect(proc); proc.connect(ctx.destination);
-  keepAwake();
-  listening = true; setMic(true);
-  loop(++runId);
+  busy = false;
+  tick = setInterval(offTick, 200);
 }
 
-function stop() {
-  listening = false;
-  stream?.getTracks().forEach(t => t.stop());
+function offTick() {
+  if (!listening || busy || total < SR) return;
+  const audio = new Float32Array(total);
+  let o = 0; for (const c of chunks) { audio.set(c, o); o += c.length; }
+  const tail = audio.subarray(Math.max(0, audio.length - SR * 2));
+  let s = 0; for (const x of tail) s += x * x;
+  if (Math.sqrt(s / tail.length) < VOICE_RMS) return;  // silence: skip (avoids hallucinations)
+  busy = true;
+  worker.postMessage({ type: "run", audio, id: gen }, [audio.buffer]);
+}
+
+function offClear() { chunks = []; total = 0; gen++; }
+function offStop() {
+  clearInterval(tick);
+  stream?.getTracks().forEach(t => t.stop()); stream = null;
   ctx?.close(); ctx = null;
-  wake?.release(); wake = null;
-  resetAudio(); setMic(false);
+  offClear();
 }
 
-async function loop(run) {
-  while (listening && run === runId) {
-    const audio = new Float32Array(total);
-    let o = 0; for (const c of chunks) { audio.set(c, o); o += c.length; }
-    if (audio.length < SR) { await sleep(250); continue; }
-    const tail = audio.subarray(Math.max(0, audio.length - SR * 3));
-    let s = 0; for (const x of tail) s += x * x;
-    if (Math.sqrt(s / tail.length) < VOICE_RMS) { await sleep(250); continue; } // silence
-    const g = gen;
-    const { text } = await asr(audio, { language: "arabic", task: "transcribe" });
-    if (g !== gen || run !== runId) continue;
-    $("heard").textContent = text.trim();
-    track(text.split(/\s+/).map(norm).filter(Boolean));
-  }
-}
-
-// ---------- surah sheet ----------
+// ================= surah sheet =================
 function renderList() {
   const raw = $("search").value.trim().toLowerCase(), q = norm(raw);
   $("list").innerHTML = "";
@@ -402,60 +557,67 @@ function openSheet() {
 }
 function closeSheet() { $("sheet").classList.remove("open"); }
 
-// ---------- UI ----------
+// ================= UI =================
 function applyUI() {
   document.documentElement.dataset.theme = state.theme;
   document.querySelector("meta[name=theme-color]").content = state.theme === "night" ? "#071f1b" : "#efe5cc";
   $("text").classList.toggle("show", state.show); $("show").classList.toggle("on", state.show);
   document.body.classList.toggle("cap", state.cap); $("cap").classList.toggle("on", state.cap);
+  $("engine").textContent = state.engine === "live" ? "⚡ مباشر" : "📴 بدون إنترنت";
+}
+
+async function useEngine(engine) {
+  if (listening) stop();
+  state.engine = engine; save(); applyUI();
+  if (engine === "offline") {
+    $("mic").disabled = true;
+    if (!modelReady) { $("loadErr").textContent = ""; $("loadBack").hidden = true; $("loader").classList.remove("done"); }
+    try {
+      const m = await loadModel();
+      $("loader").classList.add("done");
+      toast("وضع بدون إنترنت", m.generic ? "نموذج عام · دقة أقل في التلاوة" : "النموذج: " + m.name, 2500);
+    } catch {
+      $("loadText").textContent = "تعذّر تحميل النموذج";
+      $("loadBack").hidden = !SpeechRec;
+      return;
+    }
+  } else {
+    toast("الوضع المباشر", "تتبّع فوري · يحتاج الإنترنت", 2500);
+  }
+  $("mic").disabled = false;
 }
 
 applyUI(); setMic(false);
 $("theme").onclick = () => { state.theme = state.theme === "night" ? "day" : "night"; save(); applyUI(); };
 $("show").onclick = () => { state.show = !state.show; save(); applyUI(); };
 $("cap").onclick = () => { state.cap = !state.cap; save(); applyUI(); };
+$("engine").onclick = () => {
+  if (!SpeechRec) { toast("الوضع المباشر غير متاح", "هذا المتصفح لا يدعم التعرّف على الكلام · استخدم Chrome أو Safari"); return; }
+  useEngine(state.engine === "live" ? "offline" : "live");
+};
+$("loadBack").onclick = () => { $("loader").classList.add("done"); useEngine("live"); };
 $("reset").onclick = build;
 $("peek").onclick = () => { const i = words.findIndex((w, k) => k >= pointer && w.st === "hid"); if (i >= 0) set(i, "peek"); };
-$("mic").onclick = () => listening ? stop() : start().catch(e => toast("تعذّر تشغيل الميكروفون", e.message));
+$("mic").onclick = () => listening ? stop() : start().catch(e => { stop(); toast("تعذّر تشغيل الميكروفون", e.message); });
 $("pick").onclick = openSheet;
 $("sheet").onclick = e => { if (e.target.id === "sheet") closeSheet(); };
 $("search").oninput = renderList;
 $("toast").onclick = () => $("toast").classList.remove("open");
 document.addEventListener("visibilitychange", () => { if (listening && document.visibilityState === "visible") keepAwake(); });
 
-// ---------- load ----------
+// install button (Chrome / Edge / Samsung Internet on Android)
+let installEvt;
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; $("install").hidden = false; });
+window.addEventListener("appinstalled", () => { $("install").hidden = true; toast("تم التثبيت ✨", "افتح حفظ من الشاشة الرئيسية"); });
+$("install").onclick = async () => { $("install").hidden = true; installEvt?.prompt(); installEvt = null; };
+
+// ================= load =================
 try { $("loadText").textContent = "تحميل نص المصحف…"; surahs = await loadQuran(); }
 catch { $("loadText").textContent = "يلزم الاتصال بالإنترنت في أول مرة"; throw new Error("offline"); }
 build();
-
-const errors = [];
-let used;
-for (const m of MODELS) {
-  const files = {};
-  $("loadBar").style.width = "0%";
-  $("loadText").textContent = `تحميل نموذج التلاوة (${m.name})…`;
-  try {
-    asr = await pipeline("automatic-speech-recognition", m.id, {
-      dtype: m.dtype,
-      device: "wasm",
-      progress_callback: p => {
-        if (p.status !== "progress" || !p.total) return;
-        files[p.file] = [p.loaded, p.total];
-        const [l, t] = Object.values(files).reduce((a, b) => [a[0] + b[0], a[1] + b[1]], [0, 0]);
-        $("loadBar").style.width = (l / t * 100) + "%";
-      },
-    });
-    used = m; break;
-  } catch (e) {
-    errors.push(`${m.name}: ${String(e?.message || e).slice(0, 120)}`);
-    $("loadErr").textContent = errors.join("\n");
-    console.warn("Model failed:", m.id, e);
-  }
-}
-if (!asr) { $("loadText").textContent = "تعذّر تحميل النموذج"; throw new Error("no model"); }
 $("loader").classList.add("done");
-$("mic").disabled = false;
-toast("جاهز ✨", used.generic ? "نموذج عام · دقة أقل في التلاوة" : "النموذج: " + used.name);
+useEngine(state.engine);
 </script>
 </body>
 </html>
+
