@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-theme="night">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#071f1b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>حفظ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Reem+Kufi:wght@500;700&display=swap">
+<style>
+:root{
+  --font-q:"Amiri Quran",serif;
+  --font-ui:"Reem Kufi",system-ui,sans-serif;
+  --pattern:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72'%3E%3Cg fill='none' stroke='%23d4af37' stroke-opacity='.09'%3E%3Crect x='21' y='21' width='30' height='30'/%3E%3Crect x='21' y='21' width='30' height='30' transform='rotate(45 36 36)'/%3E%3Ccircle cx='36' cy='36' r='7'/%3E%3Cpath d='M0 0l14 14M72 0L58 14M0 72l14-14M72 72L58 58'/%3E%3C/g%3E%3C/svg%3E");
+}
+[data-theme=night]{--bg:#071f1b;--bg2:#0d3530;--card:#0e302a;--ink:#f3ead3;--muted:#8fa89f;--gold:#d4af37;--gold2:#f5d77a;--line:#d4af3738;--hid:#ffffff12;--bad:#ff6b6b;--peek:#f5a524;--glass:#0a2723d9}
+[data-theme=day]{--bg:#efe5cc;--bg2:#f7f0dc;--card:#fffaf0;--ink:#2b2418;--muted:#8a7a5e;--gold:#a8842a;--gold2:#c9a443;--line:#a8842a44;--hid:#2b241812;--bad:#c62828;--peek:#c77700;--glass:#fffaf0d9}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{min-height:100vh;color:var(--ink);font-family:var(--font-ui);
+  background:var(--pattern),radial-gradient(ellipse at top,var(--bg2),var(--bg) 70%);background-attachment:fixed;transition:background .4s,color .4s}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;padding:0}
+svg{width:22px;height:22px;fill:currentColor}
+
+/* loader */
+#loader{position:fixed;inset:0;z-index:30;display:grid;place-content:center;justify-items:center;gap:14px;text-align:center;padding:24px;
+  background:var(--pattern),radial-gradient(circle at 50% 35%,var(--bg2),var(--bg));transition:opacity .7s}
+#loader.done{opacity:0;pointer-events:none}
+#loader h1{font:700 52px var(--font-q);color:var(--gold);margin:8px 0 0;text-shadow:0 0 30px var(--line)}
+#loader p{margin:0;color:var(--ink)} #loader small{color:var(--muted)}
+.star{width:84px;height:84px;position:relative;animation:spin 14s linear infinite}
+.star::before,.star::after{content:"";position:absolute;inset:0;border:2px solid var(--gold);border-radius:8px}
+.star::after{transform:rotate(45deg)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.bar{width:230px;height:6px;border-radius:9px;background:var(--hid);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold2),var(--gold));transition:width .3s}
+
+/* header */
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:calc(env(safe-area-inset-top) + 10px) 14px 12px;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.brand{width:48px;font:700 28px var(--font-q);color:var(--gold)}
+.icon{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--hid);display:grid;place-items:center;color:var(--gold)}
+.pill{display:flex;align-items:center;gap:6px;border:1px solid var(--gold);border-radius:999px;padding:4px 18px;font:22px var(--font-q);color:var(--ink);background:linear-gradient(180deg,var(--hid),transparent)}
+.pill svg{width:18px;height:18px;color:var(--gold)}
+#progress{position:absolute;left:0;right:0;bottom:-1px;height:3px}
+#progress::after{content:"";display:block;height:100%;width:var(--p,0%);background:linear-gradient(90deg,var(--gold2),var(--gold));box-shadow:0 0 10px var(--gold);transition:width .5s}
+
+/* page */
+main{padding:18px 12px 55vh}
+.page{position:relative;max-width:760px;margin:0 auto;padding:22px 16px 26px;background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:0 24px 60px #0005}
+.page::before{content:"";position:absolute;inset:7px;border:1px solid var(--line);border-radius:18px;pointer-events:none}
+.cartouche{position:relative;width:fit-content;min-width:60%;margin:0 auto 6px;padding:8px 36px;text-align:center;border:1.5px solid var(--gold);border-radius:999px;background:linear-gradient(180deg,var(--hid),transparent)}
+.cartouche::before,.cartouche::after{content:"";position:absolute;top:50%;width:14px;height:14px;border:1.5px solid var(--gold);background:var(--card);transform:translateY(-50%) rotate(45deg)}
+.cartouche::before{right:-8px} .cartouche::after{left:-8px}
+#sName{display:block;font:30px/1.5 var(--font-q);color:var(--gold)}
+#sInfo{font-size:13px;color:var(--muted)}
+.basmala{text-align:center;font:26px/2 var(--font-q);color:var(--gold);margin-top:6px}
+#text{font:30px/2.35 var(--font-q);text-align:justify;padding:6px 6px 0;user-select:none;-webkit-user-select:none}
+
+/* words */
+.w{border-radius:8px;padding:0 3px;cursor:pointer;transition:color .3s,background .3s}
+.w.hid{color:transparent;background:var(--hid)}
+.show .w.hid{color:var(--muted);background:none}
+.w.ok{animation:reveal .9s ease}
+.w.missed{color:var(--bad);text-decoration:underline wavy var(--bad);text-underline-offset:10px;animation:pop .4s}
+.w.peek{color:var(--peek);animation:pop .4s}
+.w.cur{background:var(--line);box-shadow:0 0 0 2px var(--gold) inset;animation:pulse 1.6s ease-in-out infinite}
+@keyframes reveal{0%{color:var(--gold2);text-shadow:0 0 18px var(--gold)}100%{color:var(--ink);text-shadow:none}}
+@keyframes pop{0%{transform:scale(.85);opacity:0}100%{transform:none;opacity:1}}
+@keyframes pulse{50%{box-shadow:0 0 0 2px var(--gold) inset,0 0 16px var(--gold)}}
+.w{display:inline-block}
+
+/* ayah medallion */
+.num{position:relative;display:inline-grid;place-items:center;width:2.2em;height:2.2em;margin:0 .2em;vertical-align:middle;font:700 .48em var(--font-ui);color:var(--gold);cursor:pointer}
+.num::before,.num::after{content:"";position:absolute;inset:.3em;border:1.5px solid var(--gold);border-radius:3px}
+.num::after{transform:rotate(45deg)}
+
+/* dock */
+.dock{position:fixed;z-index:6;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 12px);max-width:520px;margin:0 auto;padding:8px 10px 10px;
+  background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:28px;box-shadow:0 14px 40px #0006}
+.stats{display:flex;justify-content:center;gap:16px;font-size:13px;color:var(--muted);margin-bottom:2px}
+.stats b{font-weight:700} .stats .g{color:var(--gold)} .stats .r{color:var(--bad)}
+.controls{display:grid;grid-template-columns:repeat(5,1fr);align-items:end;justify-items:center}
+.ctl{display:grid;justify-items:center;gap:2px;font-size:11px;color:var(--muted);padding:4px;transition:color .2s}
+.ctl.on{color:var(--gold)}
+.mic{position:relative;width:72px;height:72px;margin-top:-40px;border-radius:50%;display:grid;place-items:center;color:#1b1405;
+  background:radial-gradient(circle at 30% 30%,var(--gold2),var(--gold) 60%,#7a5f17);box-shadow:0 10px 30px #d4af3766,inset 0 2px 6px #fff7}
+.mic svg{width:32px;height:32px}
+.mic:disabled{filter:grayscale(1) opacity(.5)}
+.ring{position:absolute;inset:-7px;border-radius:50%;border:2px solid var(--gold);opacity:0;pointer-events:none}
+.mic.live .ring{opacity:.7;transform:scale(calc(1 + var(--lvl,0) * .5));transition:transform .15s}
+.mic.live .r2{animation:ping 1.8s infinite}
+@keyframes ping{from{transform:scale(1);opacity:.6}to{transform:scale(1.8);opacity:0}}
+
+/* caption */
+#heard{position:fixed;z-index:6;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom) + 128px);max-width:500px;margin:0 auto;padding:4px 14px;text-align:center;
+  font:20px/1.8 var(--font-q);color:var(--muted);background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:16px}
+#heard:empty,body:not(.cap) #heard{display:none}
+
+/* surah sheet */
+.sheet{position:fixed;inset:0;z-index:10;display:flex;align-items:flex-end;background:#0009;opacity:0;pointer-events:none;transition:opacity .25s}
+.sheet.open{opacity:1;pointer-events:auto}
+.sheet-card{width:100%;max-width:640px;max-height:82vh;margin:0 auto;display:flex;flex-direction:column;background:var(--card);border-top:1.5px solid var(--gold);
+  border-radius:28px 28px 0 0;padding-bottom:env(safe-area-inset-bottom);transform:translateY(100%);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.sheet.open .sheet-card{transform:none}
+.grab{width:44px;height:5px;margin:10px auto;border-radius:9px;background:var(--line)}
+.sheet-head{display:flex;gap:8px;padding:0 14px 10px}
+.sheet-head input{font:16px var(--font-ui);color:var(--ink);background:var(--hid);border:1px solid var(--line);border-radius:14px;padding:10px 12px;outline:none}
+#search{flex:1;min-width:0} .from{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)} #from{width:4.2em;text-align:center}
+#list{list-style:none;margin:0;padding:0 8px 16px;overflow:auto}
+#list li{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:16px;cursor:pointer}
+#list li.sel{background:var(--hid);box-shadow:0 0 0 1px var(--line) inset}
+.badge{position:relative;flex:none;width:38px;height:38px;display:grid;place-items:center;font:700 13px var(--font-ui);color:var(--gold)}
+.badge::before,.badge::after{content:"";position:absolute;inset:6px;border:1.5px solid var(--gold);border-radius:3px}
+.badge::after{transform:rotate(45deg)}
+.info{display:grid} .info b{font:400 22px/1.5 var(--font-q)} .info small{font-size:12px;color:var(--muted)}
+
+/* toast */
+#toast{position:fixed;z-index:20;top:42%;left:50%;min-width:240px;padding:22px 28px;text-align:center;background:var(--card);border:1.5px solid var(--gold);border-radius:24px;
+  box-shadow:0 0 60px var(--line);transform:translate(-50%,-50%) scale(.9);opacity:0;pointer-events:none;transition:.3s}
+#toast.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+#toastT{display:block;font:700 26px var(--font-q);color:var(--gold)} #toastS{color:var(--muted);font-size:14px}
+</style>
+</head>
+<body class="cap">
+
+<div id="loader">
+  <div class="star"></div>
+  <h1>حِفْظ</h1>
+  <p id="loadText">جارٍ التحميل…</p>
+  <div class="bar"><i id="loadBar"></i></div>
+  <small>التحميل الأول فقط · بعده يعمل بدون إنترنت</small>
+</div>
+
+<header class="top">
+  <span class="brand">حِفْظ</span>
+  <button id="pick" class="pill"><span id="pickName"></span><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></button>
+  <button id="theme" class="icon" aria-label="Theme"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+  <div id="progress"></div>
+</header>
+
+<main>
+  <section class="page">
+    <div class="cartouche"><span id="sName"></span><span id="sInfo"></span></div>
+    <div id="basmala" class="basmala">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+    <div id="text"></div>
+  </section>
+</main>
+
+<div id="heard"></div>
+
+<nav class="dock">
+  <div class="stats">
+    <span class="g">✓ <b id="stOk">٠</b></span>
+    <span class="r">✗ <b id="stBad">٠</b></span>
+    <span><b id="stPct">٠٪</b></span>
+  </div>
+  <div class="controls">
+    <button id="reset" class="ctl"><svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg>إعادة</button>
+    <button id="peek" class="ctl"><svg viewBox="0 0 24 24"><path d="M12 5C7 5 2.7 8.1 1 12c1.7 3.9 6 7 11 7s9.3-3.1 11-7c-1.7-3.9-6-7-11-7zm0 11.5a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9zm0-7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg>لمحة</button>
+    <button id="mic" class="mic" disabled aria-label="Mic"><span class="ring"></span><span class="ring r2"></span><span id="micIcon"></span></button>
+    <button id="show" class="ctl"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg>إظهار</button>
+    <button id="cap" class="ctl"><svg viewBox="0 0 24 24"><path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-5 4V6a2 2 0 0 1 2-2z"/></svg>المسموع</button>
+  </div>
+</nav>
+
+<div id="sheet" class="sheet">
+  <div class="sheet-card">
+    <div class="grab"></div>
+    <div class="sheet-head">
+      <input id="search" placeholder="ابحث عن سورة…" autocomplete="off">
+      <label class="from">من آية <input id="from" type="number" min="1" value="1" inputmode="numeric"></label>
+    </div>
+    <ul id="list"></ul>
+  </div>
+</div>
+
+<div id="toast"><span id="toastT"></span><span id="toastS"></span></div>
+
+<script type="module">
+import { pipeline } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3";
+
+const MODEL = "emadjumaah/mishkat-whisper-tiny-ar-quran-onnx";
+const QURAN_URL = "https://api.alquran.cloud/v1/quran/quran-simple";
+const SR = 16000, WINDOW_SEC = 6, VOICE_RMS = 0.01;
+const BASMALA = "بسم,الله,الرحمن,الرحيم";
+const MIC = '<svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg>';
+const STOP = '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="3"/></svg>';
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const ar = n => n.toLocaleString("ar-EG");
+const state = Object.assign({ sura: 1, from: 1, theme: "night", show: false, cap: true }, JSON.parse(localStorage.hifz || "{}"));
+const save = () => localStorage.hifz = JSON.stringify(state);
+
+let surahs, asr, words = [], pointer = 0, gen = 0, runId = 0;
+let ctx, stream, wake, chunks = [], total = 0, listening = false;
+
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+
+// ---------- text ----------
+const norm = w => w
+  .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g, "")
+  .replace(/[أإآٱ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه")
+  .replace(/[^\u0621-\u064A]/g, "");
+const kind = s => s.revelationType === "Meccan" ? "مكية" : "مدنية";
+
+async function loadQuran() {
+  const cache = await caches.open("quran");
+  if (!(await cache.match(QURAN_URL))) await cache.add(QURAN_URL);
+  return (await (await cache.match(QURAN_URL)).json()).data.surahs;
+}
+
+function build() {
+  const s = surahs[state.sura - 1];
+  state.from = Math.min(Math.max(1, state.from | 0), s.ayahs.length);
+  save();
+  words = []; pointer = 0; resetAudio();
+  $("pickName").textContent = s.name;
+  $("sName").textContent = s.name;
+  $("sInfo").textContent = `${kind(s)} · ${ar(s.ayahs.length)} آية` + (state.from > 1 ? ` · من الآية ${ar(state.from)}` : "");
+  $("basmala").hidden = s.number === 1 || s.number === 9 || state.from > 1;
+  const box = $("text"); box.innerHTML = "";
+  for (const a of s.ayahs.slice(state.from - 1)) {
+    const tokens = a.text.trim().split(/\s+/);
+    if (a.numberInSurah === 1 && s.number !== 1 && tokens.slice(0, 4).map(norm).join() === BASMALA) tokens.splice(0, 4);
+    for (const t of tokens) {
+      const n = norm(t);
+      if (!n) { if (words.length) words.at(-1).el.textContent += " " + t; continue; } // waqf marks
+      const i = words.length, el = document.createElement("span");
+      el.className = "w hid"; el.textContent = t;
+      el.onclick = () => tapWord(i);
+      words.push({ n, el, st: "hid" });
+      box.append(el, " ");
+    }
+    const num = document.createElement("span");
+    num.className = "num"; num.textContent = ar(a.numberInSurah);
+    num.onclick = () => { state.from = a.numberInSurah; build(); };
+    box.append(num, " ");
+  }
+  window.scrollTo({ top: 0 });
+  mark();
+}
+
+function set(i, st) {
+  words[i].st = st;
+  words[i].el.className = "w " + st + (i === pointer ? " cur" : "");
+}
+
+function mark() {
+  document.querySelector(".w.cur")?.classList.remove("cur");
+  const w = words[pointer];
+  if (w) { w.el.classList.add("cur"); w.el.scrollIntoView({ block: "center", behavior: "smooth" }); }
+  const ok = words.filter(w => w.st === "ok").length, bad = words.filter(w => w.st === "missed").length;
+  const pct = words.length ? Math.round(pointer / words.length * 100) : 0;
+  $("stOk").textContent = ar(ok); $("stBad").textContent = ar(bad); $("stPct").textContent = ar(pct) + "٪";
+  $("progress").style.setProperty("--p", pct + "%");
+}
+
+function tapWord(i) {
+  if (i < pointer) {                       // recited word: go back and repeat from here
+    for (let k = i; k < pointer; k++) set(k, "hid");
+    pointer = i; resetAudio(); mark();
+  } else if (words[i].st === "hid") set(i, "peek");
+}
+
+function finish() {
+  stop();
+  const bad = words.filter(w => w.st === "missed").length, peek = words.filter(w => w.st === "peek").length;
+  toast("ما شاء الله ✨", bad || peek ? `${ar(bad)} أخطاء · ${ar(peek)} لمحات` : "تلاوة بلا أخطاء");
+}
+
+function toast(title, sub = "") {
+  $("toastT").textContent = title; $("toastS").textContent = sub;
+  $("toast").classList.add("open");
+  clearTimeout(toast.t); toast.t = setTimeout(() => $("toast").classList.remove("open"), 4500);
+}
+
+// ---------- alignment ----------
+function lev(a, b) {
+  const d = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    let prev = d[0]; d[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const tmp = d[j];
+      d[j] = Math.min(d[j] + 1, d[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1));
+      prev = tmp;
+    }
+  }
+  return d[b.length];
+}
+const same = (a, b) => a === b || lev(a, b) <= Math.floor(Math.max(a.length, b.length) / 4);
+
+function track(heard) {
+  const lo = Math.max(0, pointer - 6), hi = Math.min(words.length, pointer + 15);
+  const E = words.slice(lo, hi).map(w => w.n), n = heard.length, m = E.length;
+  if (!n || !m) return;
+  const S = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  let best = 0, bi = 0, bj = 0;
+  for (let i = 1; i <= n; i++) for (let j = 1; j <= m; j++) {
+    S[i][j] = Math.max(0, S[i-1][j-1] + (same(heard[i-1], E[j-1]) ? 2 : -1), S[i-1][j] - 1, S[i][j-1] - 1);
+    if (S[i][j] > best) { best = S[i][j]; bi = i; bj = j; }
+  }
+  if (best < 3) return;
+  const matched = new Set();
+  for (let i = bi, j = bj; i > 0 && j > 0 && S[i][j] > 0;) {
+    const ok = same(heard[i-1], E[j-1]);
+    if (S[i][j] === S[i-1][j-1] + (ok ? 2 : -1)) { if (ok) matched.add(lo + j - 1); i--; j--; }
+    else if (S[i][j] === S[i-1][j] - 1) i--;
+    else j--;
+  }
+  const end = lo + bj - 1;
+  if (end < pointer) return;
+  let missed = false;
+  for (let k = pointer; k <= end; k++) if (words[k].st !== "peek") {
+    const ok = matched.has(k);
+    set(k, ok ? "ok" : "missed");
+    if (!ok) missed = true;
+  }
+  pointer = end + 1;
+  mark();
+  if (missed) navigator.vibrate?.(70);
+  if (pointer >= words.length) finish();
+}
+
+// ---------- microphone ----------
+function resetAudio() { chunks = []; total = 0; gen++; $("heard").textContent = ""; }
+function setMic(on) { $("mic").classList.toggle("live", on); $("micIcon").innerHTML = on ? STOP : MIC; }
+const keepAwake = () => navigator.wakeLock?.request("screen").then(l => wake = l).catch(() => {});
+
+async function start() {
+  stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
+  ctx = new AudioContext({ sampleRate: SR });
+  const src = ctx.createMediaStreamSource(stream);
+  const proc = ctx.createScriptProcessor(4096, 1, 1);
+  proc.onaudioprocess = e => {
+    const c = new Float32Array(e.inputBuffer.getChannelData(0));
+    chunks.push(c); total += c.length;
+    while (total - chunks[0].length >= SR * WINDOW_SEC) total -= chunks.shift().length;
+    let s = 0; for (const x of c) s += x * x;
+    $("mic").style.setProperty("--lvl", Math.min(1, Math.sqrt(s / c.length) * 12).toFixed(2));
+  };
+  src.connect(proc); proc.connect(ctx.destination);
+  keepAwake();
+  listening = true; setMic(true);
+  loop(++runId);
+}
+
+function stop() {
+  listening = false;
+  stream?.getTracks().forEach(t => t.stop());
+  ctx?.close(); ctx = null;
+  wake?.release(); wake = null;
+  resetAudio(); setMic(false);
+}
+
+async function loop(run) {
+  while (listening && run === runId) {
+    const audio = new Float32Array(total);
+    let o = 0; for (const c of chunks) { audio.set(c, o); o += c.length; }
+    if (audio.length < SR) { await sleep(250); continue; }
+    const tail = audio.subarray(Math.max(0, audio.length - SR * 3));
+    let s = 0; for (const x of tail) s += x * x;
+    if (Math.sqrt(s / tail.length) < VOICE_RMS) { await sleep(250); continue; } // silence
+    const g = gen;
+    const { text } = await asr(audio, { language: "arabic", task: "transcribe" });
+    if (g !== gen || run !== runId) continue;
+    $("heard").textContent = text.trim();
+    track(text.split(/\s+/).map(norm).filter(Boolean));
+  }
+}
+
+// ---------- surah sheet ----------
+function renderList() {
+  const raw = $("search").value.trim().toLowerCase(), q = norm(raw);
+  $("list").innerHTML = "";
+  for (const s of surahs) {
+    if (raw && String(s.number) !== raw && !s.englishName.toLowerCase().includes(raw) && !(q && norm(s.name).includes(q))) continue;
+    const li = document.createElement("li");
+    if (s.number === state.sura) li.className = "sel";
+    li.innerHTML = `<span class="badge">${ar(s.number)}</span><span class="info"><b>${s.name}</b><small>${s.englishName} · ${kind(s)} · ${ar(s.ayahs.length)} آية</small></span>`;
+    li.onclick = () => { state.sura = s.number; state.from = +$("from").value || 1; closeSheet(); build(); };
+    $("list").append(li);
+  }
+}
+function openSheet() {
+  $("search").value = ""; $("from").value = 1; renderList();
+  $("sheet").classList.add("open");
+  $("list").querySelector(".sel")?.scrollIntoView({ block: "center" });
+}
+function closeSheet() { $("sheet").classList.remove("open"); }
+
+// ---------- UI ----------
+function applyUI() {
+  document.documentElement.dataset.theme = state.theme;
+  document.querySelector("meta[name=theme-color]").content = state.theme === "night" ? "#071f1b" : "#efe5cc";
+  $("text").classList.toggle("show", state.show); $("show").classList.toggle("on", state.show);
+  document.body.classList.toggle("cap", state.cap); $("cap").classList.toggle("on", state.cap);
+}
+
+applyUI(); setMic(false);
+$("theme").onclick = () => { state.theme = state.theme === "night" ? "day" : "night"; save(); applyUI(); };
+$("show").onclick = () => { state.show = !state.show; save(); applyUI(); };
+$("cap").onclick = () => { state.cap = !state.cap; save(); applyUI(); };
+$("reset").onclick = build;
+$("peek").onclick = () => { const i = words.findIndex((w, k) => k >= pointer && w.st === "hid"); if (i >= 0) set(i, "peek"); };
+$("mic").onclick = () => listening ? stop() : start().catch(e => toast("تعذّر تشغيل الميكروفون", e.message));
+$("pick").onclick = openSheet;
+$("sheet").onclick = e => { if (e.target.id === "sheet") closeSheet(); };
+$("search").oninput = renderList;
+$("toast").onclick = () => $("toast").classList.remove("open");
+document.addEventListener("visibilitychange", () => { if (listening && document.visibilityState === "visible") keepAwake(); });
+
+// ---------- load ----------
+try { $("loadText").textContent = "تحميل نص المصحف…"; surahs = await loadQuran(); }
+catch { $("loadText").textContent = "يلزم الاتصال بالإنترنت في أول مرة"; throw new Error("offline"); }
+build();
+
+$("loadText").textContent = "تحميل نموذج التعرّف على التلاوة…";
+const files = {};
+try {
+  asr = await pipeline("automatic-speech-recognition", MODEL, {
+    dtype: "int8",
+    progress_callback: p => {
+      if (p.status !== "progress" || !p.total) return;
+      files[p.file] = [p.loaded, p.total];
+      const [l, t] = Object.values(files).reduce((a, b) => [a[0] + b[0], a[1] + b[1]], [0, 0]);
+      $("loadBar").style.width = (l / t * 100) + "%";
+    },
+  });
+} catch (e) { $("loadText").textContent = "تعذّر تحميل النموذج: " + e.message; throw e; }
+$("loader").classList.add("done");
+$("mic").disabled = false;
+</script>
+</body>
+</html>
