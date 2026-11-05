@@ -184,7 +184,11 @@ main{padding:18px 12px 55vh}
 <script type="module">
 import { pipeline } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3";
 
-const MODEL = "emadjumaah/mishkat-whisper-tiny-ar-quran-onnx";
+const MODELS = [
+  { id: "emadjumaah/mishkat-whisper-tiny-ar-quran-onnx", dtype: { encoder_model: "fp32", decoder_model_merged: "int8" }, name: "tiny" },
+  { id: "eventhorizon0/tarteel-ai-onnx-whisper-base-ar-quran", dtype: "q8", name: "base" },
+  { id: "eventhorizon0/tarteel-ai-onnx-whisper-base-ar-quran", dtype: "fp32", name: "base fp32" },
+];
 const QURAN_URL = "https://api.alquran.cloud/v1/quran/quran-simple";
 const SR = 16000, WINDOW_SEC = 6, VOICE_RMS = 0.01;
 const BASMALA = "بسم,الله,الرحمن,الرحيم";
@@ -420,20 +424,28 @@ catch { $("loadText").textContent = "يلزم الاتصال بالإنترنت 
 build();
 
 $("loadText").textContent = "تحميل نموذج التعرّف على التلاوة…";
-const files = {};
-try {
-  asr = await pipeline("automatic-speech-recognition", MODEL, {
-    dtype: "int8",
-    progress_callback: p => {
-      if (p.status !== "progress" || !p.total) return;
-      files[p.file] = [p.loaded, p.total];
-      const [l, t] = Object.values(files).reduce((a, b) => [a[0] + b[0], a[1] + b[1]], [0, 0]);
-      $("loadBar").style.width = (l / t * 100) + "%";
-    },
-  });
-} catch (e) { $("loadText").textContent = "تعذّر تحميل النموذج: " + e.message; throw e; }
+let lastErr, used;
+for (const m of MODELS) {
+  const files = {};
+  $("loadBar").style.width = "0%";
+  try {
+    asr = await pipeline("automatic-speech-recognition", m.id, {
+      dtype: m.dtype,
+      device: "wasm",
+      progress_callback: p => {
+        if (p.status !== "progress" || !p.total) return;
+        files[p.file] = [p.loaded, p.total];
+        const [l, t] = Object.values(files).reduce((a, b) => [a[0] + b[0], a[1] + b[1]], [0, 0]);
+        $("loadBar").style.width = (l / t * 100) + "%";
+      },
+    });
+    used = m; break;
+  } catch (e) { lastErr = e; console.warn("Model failed:", m.id, m.dtype, e); }
+}
+if (!asr) { $("loadText").textContent = "تعذّر تحميل النموذج: " + lastErr.message; throw lastErr; }
 $("loader").classList.add("done");
 $("mic").disabled = false;
+toast("جاهز ✨", "النموذج: " + used.name);
 </script>
 </body>
 </html>
