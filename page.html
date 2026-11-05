@@ -32,6 +32,8 @@ svg{width:22px;height:22px;fill:currentColor}
 #loader.done{opacity:0;pointer-events:none}
 #loader h1{font:700 52px var(--font-q);color:var(--gold);margin:8px 0 0;text-shadow:0 0 30px var(--line)}
 #loader p{margin:0;color:var(--ink)} #loader small{color:var(--muted)}
+#loadErr{max-width:90vw;margin:0;direction:ltr;text-align:left;white-space:pre-wrap;font:12px/1.5 monospace;color:var(--bad)}
+#loadErr:empty{display:none}
 .star{width:84px;height:84px;position:relative;animation:spin 14s linear infinite}
 .star::before,.star::after{content:"";position:absolute;inset:0;border:2px solid var(--gold);border-radius:8px}
 .star::after{transform:rotate(45deg)}
@@ -62,7 +64,7 @@ main{padding:18px 12px 55vh}
 #text{font:30px/2.35 var(--font-q);text-align:justify;padding:6px 6px 0;user-select:none;-webkit-user-select:none}
 
 /* words */
-.w{border-radius:8px;padding:0 3px;cursor:pointer;transition:color .3s,background .3s}
+.w{display:inline-block;border-radius:8px;padding:0 3px;cursor:pointer;transition:color .3s,background .3s}
 .w.hid{color:transparent;background:var(--hid)}
 .show .w.hid{color:var(--muted);background:none}
 .w.ok{animation:reveal .9s ease}
@@ -72,7 +74,6 @@ main{padding:18px 12px 55vh}
 @keyframes reveal{0%{color:var(--gold2);text-shadow:0 0 18px var(--gold)}100%{color:var(--ink);text-shadow:none}}
 @keyframes pop{0%{transform:scale(.85);opacity:0}100%{transform:none;opacity:1}}
 @keyframes pulse{50%{box-shadow:0 0 0 2px var(--gold) inset,0 0 16px var(--gold)}}
-.w{display:inline-block}
 
 /* ayah medallion */
 .num{position:relative;display:inline-grid;place-items:center;width:2.2em;height:2.2em;margin:0 .2em;vertical-align:middle;font:700 .48em var(--font-ui);color:var(--gold);cursor:pointer}
@@ -133,7 +134,9 @@ main{padding:18px 12px 55vh}
   <h1>حِفْظ</h1>
   <p id="loadText">جارٍ التحميل…</p>
   <div class="bar"><i id="loadBar"></i></div>
+  <pre id="loadErr"></pre>
   <small>التحميل الأول فقط · بعده يعمل بدون إنترنت</small>
+  <small>الإصدار 3</small>
 </div>
 
 <header class="top">
@@ -184,10 +187,12 @@ main{padding:18px 12px 55vh}
 <script type="module">
 import { pipeline } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3";
 
+// Encoder always fp32: the browser runtime cannot run quantized Conv layers (ConvInteger)
 const MODELS = [
-  { id: "emadjumaah/mishkat-whisper-tiny-ar-quran-onnx", dtype: { encoder_model: "fp32", decoder_model_merged: "int8" }, name: "tiny" },
-  { id: "eventhorizon0/tarteel-ai-onnx-whisper-base-ar-quran", dtype: "q8", name: "base" },
-  { id: "eventhorizon0/tarteel-ai-onnx-whisper-base-ar-quran", dtype: "fp32", name: "base fp32" },
+  { id: "emadjumaah/mishkat-whisper-tiny-ar-quran-onnx", dtype: { encoder_model: "fp32", decoder_model_merged: "int8" }, name: "Quran tiny" },
+  { id: "eventhorizon0/tarteel-ai-onnx-whisper-base-ar-quran", dtype: { encoder_model: "fp32", decoder_model_merged: "q8" }, name: "Quran base" },
+  { id: "eventhorizon0/tarteel-ai-onnx-whisper-base-ar-quran", dtype: "fp32", name: "Quran base fp32" },
+  { id: "Xenova/whisper-tiny", dtype: { encoder_model: "fp32", decoder_model_merged: "q8" }, name: "Whisper tiny (عام)", generic: true },
 ];
 const QURAN_URL = "https://api.alquran.cloud/v1/quran/quran-simple";
 const SR = 16000, WINDOW_SEC = 6, VOICE_RMS = 0.01;
@@ -423,11 +428,12 @@ try { $("loadText").textContent = "تحميل نص المصحف…"; surahs = aw
 catch { $("loadText").textContent = "يلزم الاتصال بالإنترنت في أول مرة"; throw new Error("offline"); }
 build();
 
-$("loadText").textContent = "تحميل نموذج التعرّف على التلاوة…";
-let lastErr, used;
+const errors = [];
+let used;
 for (const m of MODELS) {
   const files = {};
   $("loadBar").style.width = "0%";
+  $("loadText").textContent = `تحميل نموذج التلاوة (${m.name})…`;
   try {
     asr = await pipeline("automatic-speech-recognition", m.id, {
       dtype: m.dtype,
@@ -440,12 +446,16 @@ for (const m of MODELS) {
       },
     });
     used = m; break;
-  } catch (e) { lastErr = e; console.warn("Model failed:", m.id, m.dtype, e); }
+  } catch (e) {
+    errors.push(`${m.name}: ${String(e?.message || e).slice(0, 120)}`);
+    $("loadErr").textContent = errors.join("\n");
+    console.warn("Model failed:", m.id, e);
+  }
 }
-if (!asr) { $("loadText").textContent = "تعذّر تحميل النموذج: " + lastErr.message; throw lastErr; }
+if (!asr) { $("loadText").textContent = "تعذّر تحميل النموذج"; throw new Error("no model"); }
 $("loader").classList.add("done");
 $("mic").disabled = false;
-toast("جاهز ✨", "النموذج: " + used.name);
+toast("جاهز ✨", used.generic ? "نموذج عام · دقة أقل في التلاوة" : "النموذج: " + used.name);
 </script>
 </body>
 </html>
